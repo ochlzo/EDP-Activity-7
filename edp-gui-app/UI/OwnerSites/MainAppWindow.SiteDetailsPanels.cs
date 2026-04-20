@@ -2,32 +2,36 @@ namespace edp_gui_app;
 
 public sealed partial class MainAppWindow
 {
-    private (
-        Control Panel,
-        TextBox Search,
-        Button Refresh,
-        DataGridView Grid,
-        Label Status) BuildOwnerSitesPanel()
+    private (Control Panel, Label SiteIdValue, Label SiteNameValue, DataGridView RisersGrid, Label RiserStatus)
+        BuildSiteDetailsPanel()
     {
-        var headerText = new FlowLayoutPanel
+        var headingText = new FlowLayoutPanel
         {
             AutoSize = true,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             Margin = new Padding(0)
         };
-        headerText.Controls.Add(new Label
+        headingText.Controls.Add(new Label
         {
             AutoSize = true,
-            Text = "Manage sites that you own here.",
+            Text = "Site Details",
             Font = new Font(Font.FontFamily, 20, FontStyle.Bold)
         });
-        headerText.Controls.Add(new Label
+        headingText.Controls.Add(new Label
         {
             AutoSize = true,
-            MaximumSize = new Size(520, 0),
-            Text = "Review the properties under your account, search quickly, and open a site record for the next management step."
+            MaximumSize = new Size(560, 0),
+            Text = "Review this site and manage the risers currently attached to it."
         });
+
+        var addRiser = new Button
+        {
+            AutoSize = true,
+            Text = "Add Riser",
+            Padding = new Padding(10, 6, 10, 6)
+        };
+        addRiser.Click += OnAddRiserClicked;
 
         var refresh = new Button
         {
@@ -35,15 +39,15 @@ public sealed partial class MainAppWindow
             Text = "Refresh",
             Padding = new Padding(10, 6, 10, 6)
         };
-        refresh.Click += OnRefreshSitesClicked;
+        refresh.Click += OnRefreshRisersClicked;
 
-        var logout = new Button
+        var back = new Button
         {
             AutoSize = true,
-            Text = "Logout",
+            Text = "Back to Sites",
             Padding = new Padding(10, 6, 10, 6)
         };
-        logout.Click += (_, _) => ShowLandingView();
+        back.Click += (_, _) => ShowOwnerSitesView();
 
         var actions = new FlowLayoutPanel
         {
@@ -52,8 +56,9 @@ public sealed partial class MainAppWindow
             WrapContents = false,
             Anchor = AnchorStyles.Top | AnchorStyles.Right
         };
+        actions.Controls.Add(addRiser);
         actions.Controls.Add(refresh);
-        actions.Controls.Add(logout);
+        actions.Controls.Add(back);
 
         var header = new TableLayoutPanel
         {
@@ -64,54 +69,34 @@ public sealed partial class MainAppWindow
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        header.Controls.Add(headerText, 0, 0);
+        header.Controls.Add(headingText, 0, 0);
         header.Controls.Add(actions, 1, 0);
 
-        var searchLabel = new Label
+        var siteIdValue = new Label { AutoSize = true, Text = "-" };
+        var siteNameValue = new Label { AutoSize = true, Text = "-" };
+
+        var details = new TableLayoutPanel
         {
             AutoSize = true,
-            Text = "Search",
-            Anchor = AnchorStyles.Left
+            ColumnCount = 2,
+            RowCount = 2,
+            Margin = new Padding(0, 0, 0, 18)
         };
+        details.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        details.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        details.Controls.Add(new Label { AutoSize = true, Text = "Site ID", Font = new Font(Font, FontStyle.Bold) }, 0, 0);
+        details.Controls.Add(siteIdValue, 1, 0);
+        details.Controls.Add(new Label { AutoSize = true, Text = "Site Name", Font = new Font(Font, FontStyle.Bold) }, 0, 1);
+        details.Controls.Add(siteNameValue, 1, 1);
 
-        var search = new TextBox
-        {
-            Dock = DockStyle.Fill,
-            PlaceholderText = "Search by site name or site ID"
-        };
-        search.TextChanged += (_, _) => ApplyOwnedSiteFilter();
-
-        var addSite = new Button
-        {
-            AutoSize = true,
-            Text = "Add Site",
-            Padding = new Padding(10, 6, 10, 6),
-            Anchor = AnchorStyles.Right
-        };
-        addSite.Click += OnAddSiteClicked;
-
-        var searchRow = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = true,
-            ColumnCount = 3,
-            Margin = new Padding(0, 0, 0, 12)
-        };
-        searchRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        searchRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        searchRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        searchRow.Controls.Add(searchLabel, 0, 0);
-        searchRow.Controls.Add(search, 1, 0);
-        searchRow.Controls.Add(addSite, 2, 0);
-
-        var status = new Label
+        var riserStatus = new Label
         {
             AutoSize = true,
             MaximumSize = new Size(720, 0),
             Margin = new Padding(0, 0, 0, 12)
         };
 
-        var grid = new DataGridView
+        var risersGrid = new DataGridView
         {
             Dock = DockStyle.Fill,
             ReadOnly = true,
@@ -124,41 +109,48 @@ public sealed partial class MainAppWindow
             SelectionMode = DataGridViewSelectionMode.FullRowSelect,
             BackgroundColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle,
-            DataSource = _sitesBindingSource
+            DataSource = _siteRisersBindingSource
         };
-        grid.Columns.Add(new DataGridViewTextBoxColumn
+        risersGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
-            Name = "SiteId",
-            HeaderText = "Site ID",
-            DataPropertyName = nameof(OwnedSite.SiteId),
+            Name = "RiserId",
+            HeaderText = "Riser ID",
+            DataPropertyName = nameof(OwnedRiser.RiserId),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
         });
-        grid.Columns.Add(new DataGridViewLinkColumn
+        risersGrid.Columns.Add(new DataGridViewLinkColumn
         {
-            Name = "SiteName",
-            HeaderText = "Site Name",
-            DataPropertyName = nameof(OwnedSite.SiteName),
+            Name = "RiserName",
+            HeaderText = "Riser Name",
+            DataPropertyName = nameof(OwnedRiser.RiserName),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
             LinkBehavior = LinkBehavior.HoverUnderline,
             TrackVisitedState = false
         });
-        grid.Columns.Add(new DataGridViewButtonColumn
+        risersGrid.Columns.Add(new DataGridViewTextBoxColumn
         {
-            Name = "EditSite",
+            Name = "RoomCount",
+            HeaderText = "How Many Rooms",
+            DataPropertyName = nameof(OwnedRiser.RoomCount),
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
+        });
+        risersGrid.Columns.Add(new DataGridViewButtonColumn
+        {
+            Name = "EditRiser",
             HeaderText = string.Empty,
             Text = "Edit",
             UseColumnTextForButtonValue = true,
             AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
         });
-        grid.Columns.Add(new DataGridViewButtonColumn
+        risersGrid.Columns.Add(new DataGridViewButtonColumn
         {
-            Name = "DeleteSite",
+            Name = "DeleteRiser",
             HeaderText = string.Empty,
             Text = "Delete",
             UseColumnTextForButtonValue = true,
             AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
         });
-        grid.CellContentClick += OnSitesGridCellContentClick;
+        risersGrid.CellContentClick += OnSiteRisersGridCellContentClick;
 
         var panel = new TableLayoutPanel
         {
@@ -173,10 +165,10 @@ public sealed partial class MainAppWindow
         panel.RowStyles.Add(new RowStyle());
         panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         panel.Controls.Add(header, 0, 0);
-        panel.Controls.Add(searchRow, 0, 1);
-        panel.Controls.Add(status, 0, 2);
-        panel.Controls.Add(grid, 0, 3);
+        panel.Controls.Add(details, 0, 1);
+        panel.Controls.Add(riserStatus, 0, 2);
+        panel.Controls.Add(risersGrid, 0, 3);
 
-        return (panel, search, refresh, grid, status);
+        return (panel, siteIdValue, siteNameValue, risersGrid, riserStatus);
     }
 }

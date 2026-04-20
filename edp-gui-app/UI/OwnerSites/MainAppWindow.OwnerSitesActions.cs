@@ -87,6 +87,7 @@ public sealed partial class MainAppWindow
         {
             _flowController.ShowSiteDetails(site);
             ApplyState();
+            await ReloadSiteRisersAsync();
             return;
         }
 
@@ -130,7 +131,16 @@ public sealed partial class MainAppWindow
             return;
         }
 
-        await _authService.DeleteSiteAsync(site.SiteId, owner.OwnerId);
+        try
+        {
+            await _authService.DeleteSiteAsync(site.SiteId, owner.OwnerId);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Delete Site", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
         await ReloadOwnedSitesAsync();
     }
 }

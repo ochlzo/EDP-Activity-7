@@ -186,7 +186,7 @@ public sealed class SiteOwnerAuthServiceTests
             var ownerOneSites = await service.LoadSitesByOwnerAsync(ownerOneId);
             var ownerTwoSites = await service.LoadSitesByOwnerAsync(ownerTwoId);
 
-            Assert.AreEqual(0, ownerOneSites.Count);
+            Assert.IsEmpty(ownerOneSites);
             CollectionAssert.AreEqual(new[] { remainingSiteId }, ownerTwoSites.Select(site => site.SiteId).ToArray());
             CollectionAssert.AreEqual(new[] { "Keep Me" }, ownerTwoSites.Select(site => site.SiteName).ToArray());
         }

@@ -2,7 +2,7 @@ using MySqlConnector;
 
 namespace edp_gui_app;
 
-public sealed class SiteOwnerAuthService
+public sealed partial class SiteOwnerAuthService
 {
     private readonly string _connectionString;
 
@@ -166,6 +166,125 @@ public sealed class SiteOwnerAuthService
         if (rowsDeleted == 0)
         {
             throw new InvalidOperationException("Site could not be deleted.");
+        }
+    }
+
+    public async Task<IReadOnlyList<OwnedRiser>> LoadRisersBySiteAsync(
+        int siteId,
+        int ownerId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = new MySqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT riser.riser_id, riser.riser_name, COUNT(room.room_id) AS room_count
+            FROM riser
+            INNER JOIN site ON site.site_id = riser.site_id
+            LEFT JOIN room ON room.riser_id = riser.riser_id
+            WHERE site.site_id = @siteId AND site.owner_id = @ownerId
+            GROUP BY riser.riser_id, riser.riser_name
+            ORDER BY riser.riser_name, riser.riser_id;
+            """;
+        command.Parameters.AddWithValue("@siteId", siteId);
+        command.Parameters.AddWithValue("@ownerId", ownerId);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var risers = new List<OwnedRiser>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            risers.Add(new OwnedRiser(
+                reader.GetInt32("riser_id"),
+                reader.GetString("riser_name"),
+                reader.GetInt32("room_count")));
+        }
+
+        return risers;
+    }
+
+    public async Task<OwnedRiser> CreateRiserAsync(
+        int siteId,
+        int ownerId,
+        string riserName,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = new MySqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO riser (riser_name, site_id)
+            SELECT @riserName, site.site_id
+            FROM site
+            WHERE site.site_id = @siteId AND site.owner_id = @ownerId;
+            """;
+        command.Parameters.AddWithValue("@riserName", riserName);
+        command.Parameters.AddWithValue("@siteId", siteId);
+        command.Parameters.AddWithValue("@ownerId", ownerId);
+
+        var rowsInserted = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (rowsInserted == 0)
+        {
+            throw new InvalidOperationException("Riser could not be created.");
+        }
+
+        return new OwnedRiser(Convert.ToInt32(command.LastInsertedId), riserName, 0);
+    }
+
+    public async Task UpdateRiserAsync(
+        int riserId,
+        int siteId,
+        int ownerId,
+        string riserName,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = new MySqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE riser
+            INNER JOIN site ON site.site_id = riser.site_id
+            SET riser.riser_name = @riserName
+            WHERE riser.riser_id = @riserId AND site.site_id = @siteId AND site.owner_id = @ownerId;
+            """;
+        command.Parameters.AddWithValue("@riserName", riserName);
+        command.Parameters.AddWithValue("@riserId", riserId);
+        command.Parameters.AddWithValue("@siteId", siteId);
+        command.Parameters.AddWithValue("@ownerId", ownerId);
+
+        var rowsUpdated = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (rowsUpdated == 0)
+        {
+            throw new InvalidOperationException("Riser could not be updated.");
+        }
+    }
+
+    public async Task DeleteRiserAsync(
+        int riserId,
+        int siteId,
+        int ownerId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = new MySqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            DELETE riser
+            FROM riser
+            INNER JOIN site ON site.site_id = riser.site_id
+            WHERE riser.riser_id = @riserId AND site.site_id = @siteId AND site.owner_id = @ownerId;
+            """;
+        command.Parameters.AddWithValue("@riserId", riserId);
+        command.Parameters.AddWithValue("@siteId", siteId);
+        command.Parameters.AddWithValue("@ownerId", ownerId);
+
+        var rowsDeleted = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (rowsDeleted == 0)
+        {
+            throw new InvalidOperationException("Riser could not be deleted.");
         }
     }
 

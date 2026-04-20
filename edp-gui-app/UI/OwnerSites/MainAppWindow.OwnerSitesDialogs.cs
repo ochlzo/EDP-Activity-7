@@ -4,39 +4,89 @@ public sealed partial class MainAppWindow
 {
     private Form BuildAddSiteDialog(int ownerId)
     {
-        return BuildSiteNameDialog(
+        return BuildNameDialog(
             "Add Site",
+            "Site Name",
             "Create",
             string.Empty,
+            "Enter a site name.",
             siteName => _authService.CreateSiteAsync(ownerId, siteName));
     }
 
     private Form BuildEditSiteDialog(int ownerId, OwnedSite site)
     {
-        return BuildSiteNameDialog(
+        return BuildNameDialog(
             "Edit Site",
+            "Site Name",
             "Update",
             site.SiteName,
+            "Enter a site name.",
             siteName => _authService.UpdateSiteAsync(site.SiteId, ownerId, siteName));
     }
 
-    private Form BuildSiteNameDialog(
+    private Form BuildAddRiserDialog(int ownerId, int siteId)
+    {
+        return BuildNameDialog(
+            "Add Riser",
+            "Riser Name",
+            "Create",
+            string.Empty,
+            "Enter a riser name.",
+            riserName => _authService.CreateRiserAsync(siteId, ownerId, riserName));
+    }
+
+    private Form BuildEditRiserDialog(int ownerId, int siteId, OwnedRiser riser)
+    {
+        return BuildNameDialog(
+            "Edit Riser",
+            "Riser Name",
+            "Update",
+            riser.RiserName,
+            "Enter a riser name.",
+            riserName => _authService.UpdateRiserAsync(riser.RiserId, siteId, ownerId, riserName));
+    }
+
+    private Form BuildAddRoomDialog(int ownerId, int siteId, int riserId)
+    {
+        return BuildNameDialog(
+            "Add Room",
+            "Room Name",
+            "Create",
+            string.Empty,
+            "Enter a room name.",
+            roomName => _authService.CreateRoomAsync(riserId, siteId, ownerId, roomName));
+    }
+
+    private Form BuildEditRoomDialog(int ownerId, int siteId, OwnedRoom room)
+    {
+        return BuildNameDialog(
+            "Update Room",
+            "Room Name",
+            "Update",
+            room.RoomName,
+            "Enter a room name.",
+            roomName => _authService.UpdateRoomAsync(room.RoomId, siteId, ownerId, roomName));
+    }
+
+    private Form BuildNameDialog(
         string title,
+        string labelText,
         string submitText,
-        string initialSiteName,
+        string initialValue,
+        string emptyValueMessage,
         Func<string, Task> submitAsync)
     {
-        var siteNameLabel = new Label
+        var nameLabel = new Label
         {
             AutoSize = true,
-            Text = "Site Name",
+            Text = labelText,
             Anchor = AnchorStyles.Left
         };
 
-        var siteNameTextBox = new TextBox
+        var nameTextBox = new TextBox
         {
             Dock = DockStyle.Fill,
-            Text = initialSiteName
+            Text = initialValue
         };
 
         var errorLabel = new Label
@@ -80,8 +130,8 @@ public sealed partial class MainAppWindow
             RowCount = 4,
             Padding = new Padding(18)
         };
-        content.Controls.Add(siteNameLabel, 0, 0);
-        content.Controls.Add(siteNameTextBox, 0, 1);
+        content.Controls.Add(nameLabel, 0, 0);
+        content.Controls.Add(nameTextBox, 0, 1);
         content.Controls.Add(errorLabel, 0, 2);
         content.Controls.Add(buttons, 0, 3);
 
@@ -101,10 +151,10 @@ public sealed partial class MainAppWindow
 
         submitButton.Click += async (_, _) =>
         {
-            var siteName = siteNameTextBox.Text.Trim();
-            if (string.IsNullOrWhiteSpace(siteName))
+            var name = nameTextBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(name))
             {
-                errorLabel.Text = "Enter a site name.";
+                errorLabel.Text = emptyValueMessage;
                 return;
             }
 
@@ -114,7 +164,7 @@ public sealed partial class MainAppWindow
 
             try
             {
-                await submitAsync(siteName);
+                await submitAsync(name);
                 dialog.DialogResult = DialogResult.OK;
                 dialog.Close();
             }

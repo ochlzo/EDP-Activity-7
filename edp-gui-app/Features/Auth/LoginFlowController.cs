@@ -6,12 +6,14 @@ public sealed class LoginFlowController
 
     public SiteOwner? CurrentOwner { get; private set; }
     public OwnedSite? SelectedSite { get; private set; }
+    public OwnedRiser? SelectedRiser { get; private set; }
 
     public void ShowLanding()
     {
         CurrentState = LoginViewState.Landing;
         CurrentOwner = null;
         SelectedSite = null;
+        SelectedRiser = null;
     }
 
     public void ShowLogin()
@@ -19,6 +21,7 @@ public sealed class LoginFlowController
         CurrentState = LoginViewState.Login;
         CurrentOwner = null;
         SelectedSite = null;
+        SelectedRiser = null;
     }
 
     public void ShowSignUp()
@@ -26,25 +29,41 @@ public sealed class LoginFlowController
         CurrentState = LoginViewState.SignUp;
         CurrentOwner = null;
         SelectedSite = null;
+        SelectedRiser = null;
     }
 
     public void ShowOwnerSites(SiteOwner owner)
     {
         CurrentOwner = owner;
         SelectedSite = null;
+        SelectedRiser = null;
         CurrentState = LoginViewState.OwnerSites;
     }
 
     public void ShowOwnerSites()
     {
         SelectedSite = null;
+        SelectedRiser = null;
         CurrentState = LoginViewState.OwnerSites;
     }
 
     public void ShowSiteDetails(OwnedSite site)
     {
         SelectedSite = site;
+        SelectedRiser = null;
         CurrentState = LoginViewState.SiteDetails;
+    }
+
+    public void ShowSiteDetails()
+    {
+        SelectedRiser = null;
+        CurrentState = LoginViewState.SiteDetails;
+    }
+
+    public void ShowRiserDetails(OwnedRiser riser)
+    {
+        SelectedRiser = riser;
+        CurrentState = LoginViewState.RiserDetails;
     }
 
     public void Logout()

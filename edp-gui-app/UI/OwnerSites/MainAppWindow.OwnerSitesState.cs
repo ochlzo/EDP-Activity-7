@@ -14,8 +14,8 @@ public sealed partial class MainAppWindow
         _sitesGrid.Visible = false;
         _siteSearchTextBox.Clear();
         ShowOwnerSitesStatus(string.Empty, Color.DimGray);
-        _siteDetailsIdValueLabel.Text = "-";
-        _siteDetailsNameValueLabel.Text = "-";
+        ResetSiteDetailsState();
+        ResetRiserDetailsState();
     }
 
     private void ApplyOwnedSiteFilter()
@@ -39,13 +39,6 @@ public sealed partial class MainAppWindow
             ? "No sites are assigned to this owner yet."
             : "No matching sites found.";
         ShowOwnerSitesStatus(message, Color.DimGray);
-    }
-
-    private void UpdateSiteDetailsPanel()
-    {
-        var site = _flowController.SelectedSite;
-        _siteDetailsIdValueLabel.Text = site?.SiteId.ToString() ?? "-";
-        _siteDetailsNameValueLabel.Text = site?.SiteName ?? "-";
     }
 
     private void ShowOwnerSitesStatus(string text, Color color)

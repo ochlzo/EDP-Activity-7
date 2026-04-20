@@ -6,5 +6,6 @@ public enum LoginViewState
     Login,
     SignUp,
     OwnerSites,
-    SiteDetails
+    SiteDetails,
+    RiserDetails
 }

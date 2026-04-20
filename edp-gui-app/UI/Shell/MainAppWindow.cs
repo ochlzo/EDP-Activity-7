@@ -14,6 +14,7 @@ public sealed partial class MainAppWindow : Form
     private readonly Control _signUpPanel;
     private readonly Control _ownerSitesPanel;
     private readonly Control _siteDetailsPanel;
+    private readonly Control _riserDetailsPanel;
     private readonly TextBox _emailTextBox;
     private readonly TextBox _passwordTextBox;
     private readonly Button _loginSubmitButton;
@@ -29,6 +30,14 @@ public sealed partial class MainAppWindow : Form
     private readonly Label _ownerSitesStatusLabel;
     private readonly Label _siteDetailsIdValueLabel;
     private readonly Label _siteDetailsNameValueLabel;
+    private readonly DataGridView _siteRisersGrid;
+    private readonly Label _siteRisersStatusLabel;
+    private readonly Label _riserDetailsSiteNameValueLabel;
+    private readonly Label _riserDetailsIdValueLabel;
+    private readonly Label _riserDetailsNameValueLabel;
+    private readonly ComboBox _riserRoomsSortComboBox;
+    private readonly DataGridView _riserRoomsGrid;
+    private readonly Label _riserRoomsStatusLabel;
 
     public MainAppWindow(SiteOwnerAuthService authService)
     {
@@ -65,8 +74,12 @@ public sealed partial class MainAppWindow : Form
             _signUpStatusLabel) = BuildSignUpPanel();
         (_ownerSitesPanel, _siteSearchTextBox, _refreshSitesButton, _sitesGrid, _ownerSitesStatusLabel) =
             BuildOwnerSitesPanel();
-        (_siteDetailsPanel, _siteDetailsIdValueLabel, _siteDetailsNameValueLabel) = BuildSiteDetailsPanel();
+        (_siteDetailsPanel, _siteDetailsIdValueLabel, _siteDetailsNameValueLabel, _siteRisersGrid,
+            _siteRisersStatusLabel) = BuildSiteDetailsPanel();
+        (_riserDetailsPanel, _riserDetailsSiteNameValueLabel, _riserDetailsIdValueLabel, _riserDetailsNameValueLabel,
+            _riserRoomsSortComboBox, _riserRoomsGrid, _riserRoomsStatusLabel) = BuildRiserDetailsPanel();
 
+        _contentHost.Controls.Add(_riserDetailsPanel);
         _contentHost.Controls.Add(_siteDetailsPanel);
         _contentHost.Controls.Add(_ownerSitesPanel);
         _contentHost.Controls.Add(_signUpPanel);
