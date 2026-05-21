@@ -14,6 +14,8 @@ public sealed partial class MainAppWindow
         _sitesGrid.Visible = false;
         _siteSearchTextBox.Clear();
         ShowOwnerSitesStatus(string.Empty, Color.DimGray);
+        ResetProfileState();
+        ResetMaintenanceState();
         ResetSiteDetailsState();
         ResetRiserDetailsState();
     }

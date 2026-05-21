@@ -7,7 +7,7 @@ namespace edp_gui_app.Tests;
 public sealed class SiteOwnerRoomServiceTests
 {
     private const string ConnectionString =
-        "Server=127.0.0.1;Port=3306;Database=site_management;User ID=root;Password=NewStrongPassword123!;";
+        "Server=127.0.0.1;Port=3306;Database=site_management;User ID=root;Password=NewStrongPassword123!;SslMode=None;";
 
     [TestMethod]
     public async Task LoadRoomsBySiteAsync_ReturnsOwnedSiteRooms_WithOccupancy()

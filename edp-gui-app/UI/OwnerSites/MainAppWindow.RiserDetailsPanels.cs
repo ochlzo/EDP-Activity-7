@@ -171,6 +171,21 @@ public sealed partial class MainAppWindow
             DataPropertyName = nameof(OwnedRoom.Occupancy),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
         });
+        roomsGrid.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            Name = "Tenant",
+            HeaderText = "Tenant",
+            DataPropertyName = nameof(OwnedRoom.TenantDisplay),
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+        });
+        roomsGrid.Columns.Add(new DataGridViewButtonColumn
+        {
+            Name = "AddTenant",
+            HeaderText = string.Empty,
+            Text = "Add Tenant",
+            UseColumnTextForButtonValue = true,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
+        });
         roomsGrid.Columns.Add(new DataGridViewButtonColumn
         {
             Name = "UpdateRoom",
@@ -188,6 +203,9 @@ public sealed partial class MainAppWindow
             AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
         });
         roomsGrid.CellContentClick += OnRiserRoomsGridCellContentClick;
+        roomsGrid.CellClick += OnRiserRoomsGridCellClick;
+        roomsGrid.CellMouseMove += OnRiserRoomsGridCellMouseMove;
+        roomsGrid.CellMouseLeave += OnRiserRoomsGridCellMouseLeave;
 
         var panel = new TableLayoutPanel
         {

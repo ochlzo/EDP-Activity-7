@@ -79,6 +79,7 @@ public sealed partial class MainAppWindow
     {
         ResetLoginForm();
         ResetSignUpForm();
+        ResetPasswordRecoveryForms();
     }
 
     private void ResetLoginForm()
@@ -117,4 +118,5 @@ public sealed partial class MainAppWindow
         _signUpStatusLabel.Text = text;
         _signUpStatusLabel.ForeColor = color;
     }
+
 }

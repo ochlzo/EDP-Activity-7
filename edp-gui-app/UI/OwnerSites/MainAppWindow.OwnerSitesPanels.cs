@@ -37,6 +37,22 @@ public sealed partial class MainAppWindow
         };
         refresh.Click += OnRefreshSitesClicked;
 
+        var maintenance = new Button
+        {
+            AutoSize = true,
+            Text = "Maintenance",
+            Padding = new Padding(10, 6, 10, 6)
+        };
+        maintenance.Click += async (_, _) => await ShowMaintenanceViewAsync();
+
+        var profile = new Button
+        {
+            AutoSize = true,
+            Text = "Profile",
+            Padding = new Padding(10, 6, 10, 6)
+        };
+        profile.Click += async (_, _) => await ShowProfileViewAsync();
+
         var logout = new Button
         {
             AutoSize = true,
@@ -53,6 +69,8 @@ public sealed partial class MainAppWindow
             Anchor = AnchorStyles.Top | AnchorStyles.Right
         };
         actions.Controls.Add(refresh);
+        actions.Controls.Add(maintenance);
+        actions.Controls.Add(profile);
         actions.Controls.Add(logout);
 
         var header = new TableLayoutPanel
