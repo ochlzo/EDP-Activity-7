@@ -60,6 +60,13 @@ public sealed partial class MainAppWindow
         };
         signUpLink.LinkClicked += (_, _) => ShowSignUpView();
 
+        var forgotPasswordLink = new LinkLabel
+        {
+            AutoSize = true,
+            Text = "Forgot password?",
+        };
+        forgotPasswordLink.LinkClicked += (_, _) => ShowForgotPasswordView();
+
         var status = new Label
         {
             AutoSize = true,
@@ -82,6 +89,7 @@ public sealed partial class MainAppWindow
         panel.Controls.Add(new Label { AutoSize = true, Text = "Password", Margin = new Padding(0, 10, 0, 0) });
         panel.Controls.Add(password);
         panel.Controls.Add(actions);
+        panel.Controls.Add(forgotPasswordLink);
         panel.Controls.Add(signUpLink);
         panel.Controls.Add(status);
 

@@ -11,13 +11,17 @@ public sealed partial class SiteOwnerAuthService
     {
         await using var connection = new MySqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        await EnsureTenantDetailsColumnsAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT room.room_id, room.room_name, room.tenant_id IS NOT NULL AS is_occupied
+            SELECT room.room_id, room.room_name, room.tenant_id, tenant.tenant_name,
+                   tenant.tenant_email,
+                   room.tenant_id IS NOT NULL AS is_occupied
             FROM room
             INNER JOIN riser ON riser.riser_id = room.riser_id
             INNER JOIN site ON site.site_id = riser.site_id
+            LEFT JOIN tenant ON tenant.tenant_id = room.tenant_id
             WHERE site.site_id = @siteId AND site.owner_id = @ownerId
             ORDER BY room.room_name, room.room_id;
             """;
@@ -28,10 +32,7 @@ public sealed partial class SiteOwnerAuthService
         var rooms = new List<OwnedRoom>();
         while (await reader.ReadAsync(cancellationToken))
         {
-            rooms.Add(new OwnedRoom(
-                reader.GetInt32("room_id"),
-                reader.GetString("room_name"),
-                reader.GetBoolean("is_occupied")));
+            rooms.Add(ReadOwnedRoom(reader));
         }
 
         return rooms;
@@ -45,13 +46,17 @@ public sealed partial class SiteOwnerAuthService
     {
         await using var connection = new MySqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        await EnsureTenantDetailsColumnsAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT room.room_id, room.room_name, room.tenant_id IS NOT NULL AS is_occupied
+            SELECT room.room_id, room.room_name, room.tenant_id, tenant.tenant_name,
+                   tenant.tenant_email,
+                   room.tenant_id IS NOT NULL AS is_occupied
             FROM room
             INNER JOIN riser ON riser.riser_id = room.riser_id
             INNER JOIN site ON site.site_id = riser.site_id
+            LEFT JOIN tenant ON tenant.tenant_id = room.tenant_id
             WHERE riser.riser_id = @riserId AND site.site_id = @siteId AND site.owner_id = @ownerId
             ORDER BY room.room_name, room.room_id;
             """;
@@ -63,10 +68,7 @@ public sealed partial class SiteOwnerAuthService
         var rooms = new List<OwnedRoom>();
         while (await reader.ReadAsync(cancellationToken))
         {
-            rooms.Add(new OwnedRoom(
-                reader.GetInt32("room_id"),
-                reader.GetString("room_name"),
-                reader.GetBoolean("is_occupied")));
+            rooms.Add(ReadOwnedRoom(reader));
         }
 
         return rooms;
@@ -160,5 +162,116 @@ public sealed partial class SiteOwnerAuthService
         {
             throw new InvalidOperationException("Room could not be deleted.");
         }
+    }
+
+    public async Task<OwnedRoom> CreateTenantInRoomAsync(
+        int roomId,
+        int siteId,
+        int ownerId,
+        string tenantName,
+        string tenantEmail = "",
+        string tenantAddress = "",
+        string tenantContactNumber = "",
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = new MySqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await EnsureTenantDetailsColumnsAsync(connection, cancellationToken);
+        await EnsureOccupancyTransactionSchemaAsync(connection, cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            string roomName;
+            await using (var roomCommand = connection.CreateCommand())
+            {
+                roomCommand.Transaction = transaction;
+                roomCommand.CommandText = """
+                    SELECT room.room_name, room.tenant_id
+                    FROM room
+                    INNER JOIN riser ON riser.riser_id = room.riser_id
+                    INNER JOIN site ON site.site_id = riser.site_id
+                    WHERE room.room_id = @roomId AND site.site_id = @siteId AND site.owner_id = @ownerId
+                    FOR UPDATE;
+                    """;
+                roomCommand.Parameters.AddWithValue("@roomId", roomId);
+                roomCommand.Parameters.AddWithValue("@siteId", siteId);
+                roomCommand.Parameters.AddWithValue("@ownerId", ownerId);
+
+                await using var reader = await roomCommand.ExecuteReaderAsync(cancellationToken);
+                if (!await reader.ReadAsync(cancellationToken))
+                {
+                    throw new InvalidOperationException("Room could not be found.");
+                }
+
+                roomName = reader.GetString("room_name");
+                if (!reader.IsDBNull(reader.GetOrdinal("tenant_id")))
+                {
+                    throw new InvalidOperationException("Room is already occupied.");
+                }
+            }
+
+            int tenantId;
+            await using (var tenantCommand = connection.CreateCommand())
+            {
+                tenantCommand.Transaction = transaction;
+                tenantCommand.CommandText = """
+                    INSERT INTO tenant
+                        (tenant_name, tenant_email, tenant_address, tenant_contact_number)
+                    VALUES
+                        (@tenantName, @tenantEmail, @tenantAddress, @tenantContactNumber);
+                    """;
+                tenantCommand.Parameters.AddWithValue("@tenantName", tenantName);
+                tenantCommand.Parameters.AddWithValue("@tenantEmail", tenantEmail);
+                tenantCommand.Parameters.AddWithValue("@tenantAddress", tenantAddress);
+                tenantCommand.Parameters.AddWithValue("@tenantContactNumber", tenantContactNumber);
+
+                await tenantCommand.ExecuteNonQueryAsync(cancellationToken);
+                tenantId = Convert.ToInt32(tenantCommand.LastInsertedId);
+            }
+
+            await using (var updateCommand = connection.CreateCommand())
+            {
+                updateCommand.Transaction = transaction;
+                updateCommand.CommandText = "UPDATE room SET tenant_id = @tenantId WHERE room_id = @roomId;";
+                updateCommand.Parameters.AddWithValue("@tenantId", tenantId);
+                updateCommand.Parameters.AddWithValue("@roomId", roomId);
+
+                await updateCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await InsertOccupancyTransactionAsync(
+                connection,
+                transaction,
+                roomId,
+                tenantId,
+                "Assigned",
+                $"Assigned tenant {tenantName} to room {roomName}.",
+                $"owner:{ownerId}",
+                cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return new OwnedRoom(roomId, roomName, true, tenantId, tenantName, tenantEmail);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    private static OwnedRoom ReadOwnedRoom(MySqlDataReader reader)
+    {
+        var tenantIdOrdinal = reader.GetOrdinal("tenant_id");
+        var tenantNameOrdinal = reader.GetOrdinal("tenant_name");
+        var tenantEmailOrdinal = reader.GetOrdinal("tenant_email");
+
+        return new OwnedRoom(
+            reader.GetInt32("room_id"),
+            reader.GetString("room_name"),
+            reader.GetBoolean("is_occupied"),
+            reader.IsDBNull(tenantIdOrdinal) ? null : reader.GetInt32(tenantIdOrdinal),
+            reader.IsDBNull(tenantNameOrdinal) ? null : reader.GetString(tenantNameOrdinal),
+            reader.IsDBNull(tenantEmailOrdinal) ? null : reader.GetString(tenantEmailOrdinal));
     }
 }

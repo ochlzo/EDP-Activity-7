@@ -36,6 +36,48 @@ public sealed class LoginFlowControllerTests
     }
 
     [TestMethod]
+    public void ShowForgotPassword_MovesToForgotPasswordState()
+    {
+        var controller = new LoginFlowController();
+
+        controller.ShowForgotPassword();
+
+        Assert.AreEqual(LoginViewState.ForgotPassword, controller.CurrentState);
+    }
+
+    [TestMethod]
+    public void ShowResetPassword_MovesToResetPasswordState()
+    {
+        var controller = new LoginFlowController();
+
+        controller.ShowResetPassword();
+
+        Assert.AreEqual(LoginViewState.ResetPassword, controller.CurrentState);
+    }
+
+    [TestMethod]
+    public void ShowProfile_MovesToProfileState()
+    {
+        var controller = new LoginFlowController();
+
+        controller.ShowProfile();
+
+        Assert.AreEqual(LoginViewState.Profile, controller.CurrentState);
+    }
+
+    [TestMethod]
+    public void ShowProfile_StoresOwnerAndMovesToProfileState()
+    {
+        var controller = new LoginFlowController();
+        var owner = new SiteOwner(7, "Maria Santos", "maria@example.com");
+
+        controller.ShowProfile(owner);
+
+        Assert.AreEqual(LoginViewState.Profile, controller.CurrentState);
+        Assert.AreEqual(owner, controller.CurrentOwner);
+    }
+
+    [TestMethod]
     public void ShowLanding_FromLogin_ReturnsToLanding()
     {
         var controller = new LoginFlowController();

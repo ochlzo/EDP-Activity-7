@@ -32,6 +32,22 @@ public sealed class LoginFlowController
         SelectedRiser = null;
     }
 
+    public void ShowForgotPassword()
+    {
+        CurrentState = LoginViewState.ForgotPassword;
+        CurrentOwner = null;
+        SelectedSite = null;
+        SelectedRiser = null;
+    }
+
+    public void ShowResetPassword()
+    {
+        CurrentState = LoginViewState.ResetPassword;
+        CurrentOwner = null;
+        SelectedSite = null;
+        SelectedRiser = null;
+    }
+
     public void ShowOwnerSites(SiteOwner owner)
     {
         CurrentOwner = owner;
@@ -45,6 +61,28 @@ public sealed class LoginFlowController
         SelectedSite = null;
         SelectedRiser = null;
         CurrentState = LoginViewState.OwnerSites;
+    }
+
+    public void ShowProfile()
+    {
+        SelectedSite = null;
+        SelectedRiser = null;
+        CurrentState = LoginViewState.Profile;
+    }
+
+    public void ShowProfile(SiteOwner owner)
+    {
+        CurrentOwner = owner;
+        SelectedSite = null;
+        SelectedRiser = null;
+        CurrentState = LoginViewState.Profile;
+    }
+
+    public void ShowMaintenance()
+    {
+        SelectedSite = null;
+        SelectedRiser = null;
+        CurrentState = LoginViewState.Maintenance;
     }
 
     public void ShowSiteDetails(OwnedSite site)

@@ -4,5 +4,7 @@ obj/
 **/obj/
 .vs/
 TestResults/
+.env
+.env.local
 docs/superpowers/plans/
 docs/superpowers/specs/

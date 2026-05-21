@@ -8,7 +8,10 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        LocalEnvironmentLoader.LoadFromCurrentDirectory();
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainAppWindow(new SiteOwnerAuthService(ConnectionString)));
+        Application.Run(new MainAppWindow(
+            new SiteOwnerAuthService(ConnectionString),
+            new OwnerMaintenanceService(ConnectionString)));
     }
 }

@@ -27,4 +27,28 @@ public sealed partial class MainAppWindow
         ApplyState();
         _signUpNameTextBox.Focus();
     }
+
+    private void ShowForgotPasswordView()
+    {
+        ResetForgotPasswordStatus();
+        SetBusy(false);
+        _flowController.ShowForgotPassword();
+        ApplyState();
+        _forgotPasswordEmailTextBox.Focus();
+    }
+
+    private void ShowResetPasswordView(string? email = null)
+    {
+        ResetResetPasswordStatus();
+        SetBusy(false);
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            _resetPasswordEmailTextBox.Text = email;
+        }
+
+        SetResetPasswordStage(false);
+        _flowController.ShowResetPassword();
+        ApplyState();
+        _resetPasswordCodeTextBox.Focus();
+    }
 }

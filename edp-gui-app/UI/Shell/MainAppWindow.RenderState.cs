@@ -5,7 +5,8 @@ public sealed partial class MainAppWindow
     private void ApplyState()
     {
         var state = _flowController.CurrentState;
-        var usingOwnerWorkspace = state is LoginViewState.OwnerSites or LoginViewState.SiteDetails or LoginViewState.RiserDetails;
+        var usingOwnerWorkspace = state is LoginViewState.OwnerSites or LoginViewState.Profile
+            or LoginViewState.Maintenance or LoginViewState.SiteDetails or LoginViewState.RiserDetails;
 
         _sidebar.Visible = !usingOwnerWorkspace;
         _shell.ColumnStyles[0].Width = usingOwnerWorkspace ? 0 : SidebarWidth;
@@ -14,9 +15,18 @@ public sealed partial class MainAppWindow
         _landingPanel.Visible = state == LoginViewState.Landing;
         _loginPanel.Visible = state == LoginViewState.Login;
         _signUpPanel.Visible = state == LoginViewState.SignUp;
+        _forgotPasswordPanel.Visible = state == LoginViewState.ForgotPassword;
+        _resetPasswordPanel.Visible = state == LoginViewState.ResetPassword;
         _ownerSitesPanel.Visible = state == LoginViewState.OwnerSites;
+        _profilePanel.Visible = state == LoginViewState.Profile;
+        _maintenancePanel.Visible = state == LoginViewState.Maintenance;
         _siteDetailsPanel.Visible = state == LoginViewState.SiteDetails;
         _riserDetailsPanel.Visible = state == LoginViewState.RiserDetails;
+
+        if (state == LoginViewState.Profile)
+        {
+            UpdateProfilePanel();
+        }
 
         if (state == LoginViewState.SiteDetails)
         {
@@ -32,6 +42,8 @@ public sealed partial class MainAppWindow
         {
             LoginViewState.Login => _loginSubmitButton,
             LoginViewState.SignUp => _signUpSubmitButton,
+            LoginViewState.ForgotPassword => _forgotPasswordSubmitButton,
+            LoginViewState.ResetPassword => _resetPasswordSubmitButton,
             _ => null
         };
 
@@ -39,7 +51,11 @@ public sealed partial class MainAppWindow
         {
             LoginViewState.Login => _loginPanel,
             LoginViewState.SignUp => _signUpPanel,
+            LoginViewState.ForgotPassword => _forgotPasswordPanel,
+            LoginViewState.ResetPassword => _resetPasswordPanel,
             LoginViewState.OwnerSites => _ownerSitesPanel,
+            LoginViewState.Profile => _profilePanel,
+            LoginViewState.Maintenance => _maintenancePanel,
             LoginViewState.SiteDetails => _siteDetailsPanel,
             LoginViewState.RiserDetails => _riserDetailsPanel,
             _ => _landingPanel
@@ -51,7 +67,11 @@ public sealed partial class MainAppWindow
     {
         _loginPanel.Enabled = !isBusy;
         _signUpPanel.Enabled = !isBusy;
+        _forgotPasswordPanel.Enabled = !isBusy;
+        _resetPasswordPanel.Enabled = !isBusy;
         _ownerSitesPanel.Enabled = !isBusy;
+        _profilePanel.Enabled = !isBusy;
+        _maintenancePanel.Enabled = !isBusy;
         _siteDetailsPanel.Enabled = !isBusy;
         _riserDetailsPanel.Enabled = !isBusy;
         _refreshSitesButton.Enabled = !isBusy;
